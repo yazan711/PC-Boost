@@ -188,13 +188,13 @@ namespace CleanRamBoosterApp.WpfUI
                 () => Process.Start(new ProcessStartInfo("ms-settings:defaultapps") { UseShellExecute = true }),
                 requiresAdmin: false);
 
-            // 8. God Mode
+            // 8. System Control (All Tasks)
             AddToolCard(
                 "Sliders",
-                LocalizationService.T("ToolGodModeTitle", "⚙️ System Control (God Mode)"),
+                LocalizationService.T("ToolSystemControlTitle", "⚙️ System Control"),
                 LocalizationService.T("TagWindows", "WINDOWS"),
                 WpfTheme.ColorCyan,
-                LocalizationService.T("ToolGodModeDesc", "Direct master access to hidden Windows settings and God Mode control panel."),
+                LocalizationService.T("ToolSystemControlDesc", "Direct master access to hidden Windows settings and the complete system control panel."),
                 () => Process.Start(new ProcessStartInfo("explorer.exe", "shell:::{ED7BA470-8E54-465E-825C-99712043E01C}") { UseShellExecute = true }),
                 requiresAdmin: false);
         }

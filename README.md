@@ -42,7 +42,7 @@ Every utility opens as an independent modeless WPF window with live Dark/Light t
 - **Large File Finder:** Unlimited drive/folder scanner with size filters, virtualized grid, and smart handling for kernel-locked `hiberfil.sys` and `pagefile.sys`.
 - **Empty Folder Scanner:** Unlimited recursive bottom-up empty folder detection and pruning with zero UI freeze.
 - **Auto Shutdown Scheduler:** Countdown Timer, Specific Date & Time, and Daily Schedule for Shut Down, Restart, Sleep, Hibernate, or Lock Workstation.
-- Quick launchers for **Default Programs** and **Windows God Mode**.
+- Quick launchers for **Default Programs** and **Windows System Control**.
 
 ### 6. Settings, Hardware Overview & Diagnostics
 - **Quick Hardware Overview:** CPU physical cores & logical threads, separated dGPU / iGPU, live 3-second VRAM usage & shared memory, installed RAM, OS version, and uptime.
