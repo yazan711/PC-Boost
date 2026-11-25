@@ -43,7 +43,7 @@ Clean, buildable `.NET 8` (`net8.0-windows`) solution for **PC Boost (`v2.0.0`)*
    .\scripts\Setup-CodeSigning.ps1 -TrustCurrentUser
    ```
 
-2. **One-command build, test, sign, portable bundle, source export & `setup.exe`:**
+2. **One-command build, test, sign, portable bundle, source export & `PC-Boost-Setup.exe`:**
    ```powershell
    .\build-release.ps1
    ```

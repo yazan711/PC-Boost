@@ -9,7 +9,7 @@
     5. Authenticode-signs CleanRamBoosterApp.exe and setup.exe using signtool.exe (if installed)
        or built-in PowerShell Set-AuthenticodeSignature with a commercial or local .pfx certificate.
     6. Refreshes "Portable PC Boost", "Portable PC Boost.zip", "ReadyToRun_App.zip", and "Source Code".
-    7. Compiles standalone setup.exe via Inno Setup 6 (ISCC.exe) and verifies all Authenticode signatures.
+    7. Compiles standalone PC-Boost-Setup.exe via Inno Setup 6 (ISCC.exe) and verifies all Authenticode signatures.
 #>
 param(
     [switch]$SkipTests,
@@ -146,7 +146,7 @@ foreach ($dir in @("CleanRamBoosterApp", "CleanRamBoosterApp.Tests", "scripts"))
 }
 Copy-Item "PCBoost.sln", "build-release.ps1", ".gitignore", "README.md", "HANDOVER.md" $srcOut -ErrorAction SilentlyContinue
 
-Write-Host "=== [7/7] Compiling & Signing Inno Setup 6 Installer (setup.exe) ===" -ForegroundColor Cyan
+Write-Host "=== [7/7] Compiling & Signing Inno Setup 6 Installer (PC-Boost-Setup.exe) ===" -ForegroundColor Cyan
 $isccCandidates = @(
     (Get-Command iscc.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
     "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
@@ -156,11 +156,11 @@ $isccCandidates = @(
 
 $iscc = $isccCandidates | Select-Object -First 1
 if (-not $iscc) {
-    Write-Warning "Inno Setup 6 (ISCC.exe) not found. Skipping setup.exe build."
+    Write-Warning "Inno Setup 6 (ISCC.exe) not found. Skipping PC-Boost-Setup.exe build."
 } else {
     & $iscc "CleanRamBoosterApp\Installer\PCBoostSetup.iss"
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed." }
-    Invoke-CodeSign (Join-Path $root "setup.exe")
+    Invoke-CodeSign (Join-Path $root "PC-Boost-Setup.exe")
 }
 
 Write-Host "`n=== Release Checksums (SHA-256) ===" -ForegroundColor Green
@@ -168,7 +168,7 @@ $artifacts = @(
     "ReadyToRun_App\CleanRamBoosterApp.exe",
     "ReadyToRun_App\CleanRamBoosterApp.dll",
     "Portable PC Boost\CleanRamBoosterApp.exe",
-    "setup.exe"
+    "PC-Boost-Setup.exe"
 ) | Where-Object { Test-Path $_ }
 Get-FileHash $artifacts -Algorithm SHA256 | Format-Table Algorithm, Hash, Path -AutoSize
 
@@ -176,7 +176,7 @@ Write-Host "=== Authenticode Signature Verification ===" -ForegroundColor Green
 $signedExes = @(
     "ReadyToRun_App\CleanRamBoosterApp.exe",
     "Portable PC Boost\CleanRamBoosterApp.exe",
-    "setup.exe"
+    "PC-Boost-Setup.exe"
 ) | Where-Object { Test-Path $_ }
 foreach ($exe in $signedExes) {
     $s = Get-AuthenticodeSignature $exe

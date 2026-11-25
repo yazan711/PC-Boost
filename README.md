@@ -55,7 +55,7 @@ Every utility opens as an independent modeless WPF window with live Dark/Light t
 ### Prerequisites
 - Windows 10 or Windows 11 (x64)
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- *(Optional, for building `setup.exe`)* [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+- *(Optional, for building `PC-Boost-Setup.exe`)* [Inno Setup 6](https://jrsoftware.org/isinfo.php)
 
 ### Quick Build & Test
 ```powershell
@@ -66,9 +66,9 @@ dotnet build PCBoost.sln -c Release
 dotnet run --project CleanRamBoosterApp.Tests\CleanRamBoosterApp.Tests.csproj -c Release --no-build
 ```
 
-### Full Release Packaging (Portable + `setup.exe` + Optional Authenticode Signing)
+### Full Release Packaging (Portable + `PC-Boost-Setup.exe` + Optional Authenticode Signing)
 ```powershell
-# Unsigned release build (app + tests + portable zip + setup.exe)
+# Unsigned release build (app + tests + portable zip + PC-Boost-Setup.exe)
 .\build-release.ps1 -NoSign
 
 # Signed release build with a code-signing certificate (.pfx)

@@ -19,6 +19,7 @@ out.txt
 # Temporary screenshots & generated release packages
 gauge_*.png
 setup.exe
+PC-Boost-Setup*.exe
 *.zip
 ReadyToRun_App/
 Portable PC Boost/

@@ -43,14 +43,16 @@ jobs:
         shell: pwsh
         run: |
           $tag = "${{ steps.meta.outputs.tag }}"
-          $zipName = "Portable-PC-Boost-$tag-win-x64.zip"
+          $zipName = "PC-Boost-Portable-$tag.zip"
           Compress-Archive -Path "CleanRamBoosterApp\publish\win-x64\*" -DestinationPath $zipName -CompressionLevel Optimal
           "zip=$zipName" >> $env:GITHUB_OUTPUT
         id: portable
 
-      - name: Compile Inno Setup 6 Installer (setup.exe)
+      - name: Compile Inno Setup 6 Installer (PC-Boost-Setup)
+        id: installer
         shell: pwsh
         run: |
+          $tag = "${{ steps.meta.outputs.tag }}"
           $iscc = @(
             (Get-Command iscc.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
             "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
@@ -72,11 +74,16 @@ jobs:
           & $iscc "CleanRamBoosterApp\Installer\PCBoostSetup.iss"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+          $setupName = "PC-Boost-Setup-$tag.exe"
+          Move-Item -Path "PC-Boost-Setup.exe" -Destination $setupName -Force
+          "setup=$setupName" >> $env:GITHUB_OUTPUT
+
       - name: Generate SHA256SUMS.txt
         shell: pwsh
         run: |
+          $setup = "${{ steps.installer.outputs.setup }}"
           $zip = "${{ steps.portable.outputs.zip }}"
-          $files = @("setup.exe", $zip)
+          $files = @($setup, $zip)
           $lines = foreach ($f in $files) {
             $h = (Get-FileHash $f -Algorithm SHA256).Hash
             "$h  $f"
@@ -90,12 +97,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = "${{ steps.meta.outputs.tag }}"
+          $setup = "${{ steps.installer.outputs.setup }}"
           $zip = "${{ steps.portable.outputs.zip }}"
           $notes = @'
           ## PC Boost __TAG__ (Windows 10/11 x64)
 
           ### Downloads
-          - **`setup.exe`** — Standalone Windows installer (self-contained .NET 8 runtime included, English & Arabic wizard)
+          - **`__SETUP__`** — Standalone Windows installer (self-contained .NET 8 runtime included, English & Arabic wizard)
           - **`__ZIP__`** — Portable zero-install edition (extract and run `CleanRamBoosterApp.exe`)
           - **`SHA256SUMS.txt`** — SHA-256 verification checksums
 
@@ -110,11 +118,14 @@ jobs:
           ---
           *Built using **AI Gemini** (Google Gemini).*
           '@
-          $notes = $notes.Replace('__TAG__', $tag).Replace('__ZIP__', $zip)
+          $notes = $notes.Replace('__TAG__', $tag).Replace('__SETUP__', $setup).Replace('__ZIP__', $zip)
 
           $exists = gh release view $tag 2>$null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag "setup.exe" $zip "SHA256SUMS.txt" --clobber
+            gh release delete-asset $tag "setup.exe" --yes 2>$null
+            gh release delete-asset $tag "Portable-PC-Boost-$tag-win-x64.zip" --yes 2>$null
+            gh release upload $tag $setup $zip "SHA256SUMS.txt" --clobber
+            gh release edit $tag --title "PC Boost $tag" --notes $notes
           } else {
-            gh release create $tag "setup.exe" $zip "SHA256SUMS.txt" --title "PC Boost $tag" --notes $notes
+            gh release create $tag $setup $zip "SHA256SUMS.txt" --title "PC Boost $tag" --notes $notes
           }
