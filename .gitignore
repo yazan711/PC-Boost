@@ -1,0 +1,22 @@
+# Build & IDE artifacts
+bin/
+obj/
+publish/
+.vs/
+*.user
+*.suo
+*.cache
+
+# Local secrets & logs
+.env
+*.log
+out.txt
+
+# Temporary screenshots & generated release packages
+gauge_*.png
+setup.exe
+*.zip
+ReadyToRun_App/
+Portable PC Boost/
+Source Code/
+Delphi_Source/
