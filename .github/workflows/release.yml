@@ -1,0 +1,117 @@
+name: Release PC Boost
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v2.0.0)'
+        required: true
+        default: 'v2.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine release tag
+        id: meta
+        shell: pwsh
+        run: |
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Solution (Release)
+        run: dotnet build PCBoost.sln -c Release --nologo
+
+      - name: Publish Self-Contained win-x64 ReadyToRun
+        run: dotnet publish CleanRamBoosterApp\CleanRamBoosterApp.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o CleanRamBoosterApp\publish\win-x64 --nologo
+
+      - name: Package Portable ZIP
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.meta.outputs.tag }}"
+          $zipName = "Portable-PC-Boost-$tag-win-x64.zip"
+          Compress-Archive -Path "CleanRamBoosterApp\publish\win-x64\*" -DestinationPath $zipName -CompressionLevel Optimal
+          "zip=$zipName" >> $env:GITHUB_OUTPUT
+        id: portable
+
+      - name: Compile Inno Setup 6 Installer (setup.exe)
+        shell: pwsh
+        run: |
+          $iscc = @(
+            (Get-Command iscc.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+
+          if (-not $iscc) {
+            choco install innosetup -y --no-progress
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          }
+
+          $isccDir = Split-Path -Parent $iscc
+          $arabicIsl = Join-Path $isccDir "Languages\Arabic.isl"
+          if (-not (Test-Path $arabicIsl)) {
+            Write-Host "Arabic.isl not found in runner Inno Setup installation; removing Arabic wizard line for CI build..."
+            (Get-Content "CleanRamBoosterApp\Installer\PCBoostSetup.iss") | Where-Object { $_ -notmatch 'Arabic\.isl' } | Set-Content "CleanRamBoosterApp\Installer\PCBoostSetup.iss"
+          }
+
+          & $iscc "CleanRamBoosterApp\Installer\PCBoostSetup.iss"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Generate SHA256SUMS.txt
+        shell: pwsh
+        run: |
+          $zip = "${{ steps.portable.outputs.zip }}"
+          $files = @("setup.exe", $zip)
+          $lines = foreach ($f in $files) {
+            $h = (Get-FileHash $f -Algorithm SHA256).Hash
+            "$h  $f"
+          }
+          $lines | Set-Content "SHA256SUMS.txt" -Encoding UTF8
+          Get-Content "SHA256SUMS.txt"
+
+      - name: Create or Update GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ steps.meta.outputs.tag }}"
+          $zip = "${{ steps.portable.outputs.zip }}"
+          $notes = @'
+          ## PC Boost __TAG__ (Windows 10/11 x64)
+
+          ### Downloads
+          - **`setup.exe`** — Standalone Windows installer (self-contained .NET 8 runtime included, English & Arabic wizard)
+          - **`__ZIP__`** — Portable zero-install edition (extract and run `CleanRamBoosterApp.exe`)
+          - **`SHA256SUMS.txt`** — SHA-256 verification checksums
+
+          ### Highlights
+          - Pure-WPF main shell and all 6 Power User Toolbox utilities (System Information with live CPU oscilloscope & physical RAM slot cards, Win Fix, Auto Shutdown, Duplicate File Finder, Large File Finder, Empty Folder Scanner)
+          - Real RAM working-set & Standby List optimization + Background Auto-Clean
+          - CPU physical cores / threads, separated Dedicated GPU (dGPU) vs Integrated GPU (iGPU), and live 64-bit DXGI + WMI VRAM usage
+          - Multi-profile Care & Cleanup deep scan with optional System Restore Point & HTML export
+          - Startup Manager with Startup Guard alerts, inline UAC elevation, and 1-Click Undo history
+          - Full Dark & Light themes + English & Arabic (RTL) support
+          '@
+          $notes = $notes.Replace('__TAG__', $tag).Replace('__ZIP__', $zip)
+
+          $exists = gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag "setup.exe" $zip "SHA256SUMS.txt" --clobber
+          } else {
+            gh release create $tag "setup.exe" $zip "SHA256SUMS.txt" --title "PC Boost $tag" --notes $notes
+          }
