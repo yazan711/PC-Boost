@@ -27,5 +27,5 @@ jobs:
       - name: Upload Portable Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PC-Boost-Portable
+          name: Portable-PC-Boost-win-x64
           path: artifacts\Portable-PC-Boost

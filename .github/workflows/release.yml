@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release:
     runs-on: windows-latest
@@ -43,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           $tag = "${{ steps.meta.outputs.tag }}"
-          $zipName = "PC-Boost-Portable-$tag.zip"
+          $zipName = "Portable-PC-Boost-$tag-win-x64.zip"
           Compress-Archive -Path "CleanRamBoosterApp\publish\win-x64\*" -DestinationPath $zipName -CompressionLevel Optimal
           "zip=$zipName" >> $env:GITHUB_OUTPUT
         id: portable
@@ -74,7 +78,7 @@ jobs:
           & $iscc "CleanRamBoosterApp\Installer\PCBoostSetup.iss"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          $setupName = "PC-Boost-Setup-$tag.exe"
+          $setupName = "PC-Boost-Setup-$tag-win-x64.exe"
           Move-Item -Path "PC-Boost-Setup.exe" -Destination $setupName -Force
           "setup=$setupName" >> $env:GITHUB_OUTPUT
 
@@ -123,7 +127,8 @@ jobs:
           $exists = gh release view $tag 2>$null
           if ($LASTEXITCODE -eq 0) {
             gh release delete-asset $tag "setup.exe" --yes 2>$null
-            gh release delete-asset $tag "Portable-PC-Boost-$tag-win-x64.zip" --yes 2>$null
+            gh release delete-asset $tag "PC-Boost-Setup-$tag.exe" --yes 2>$null
+            gh release delete-asset $tag "PC-Boost-Portable-$tag.zip" --yes 2>$null
             gh release upload $tag $setup $zip "SHA256SUMS.txt" --clobber
             gh release edit $tag --title "PC Boost $tag" --notes $notes
           } else {
