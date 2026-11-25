@@ -12,7 +12,7 @@
 #>
 param(
     [string]$Subject = "CN=PC Boost, O=PC Boost",
-    [string]$Password = "PCBoost-Local-Sign-2026!",
+    [string]$Password = "",
     [int]$ValidYears = 3,
     [switch]$Force,
     [switch]$TrustCurrentUser
@@ -26,6 +26,14 @@ New-Item -ItemType Directory -Force -Path $certDir | Out-Null
 $pfxPath = Join-Path $certDir "PCBoostCodeSign.pfx"
 $cerPath = Join-Path $certDir "PCBoostCodeSign.cer"
 $pwdFile = Join-Path $certDir "PCBoostCodeSign.pass"
+
+if ([string]::IsNullOrWhiteSpace($Password)) {
+    if ((Test-Path $pwdFile) -and -not $Force) {
+        $Password = (Get-Content $pwdFile -Raw).Trim()
+    } else {
+        $Password = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(18))
+    }
+}
 
 if ((Test-Path $pfxPath) -and -not $Force) {
     Write-Host "Existing signing certificate found: $pfxPath" -ForegroundColor Green

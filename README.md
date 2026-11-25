@@ -1,64 +1,96 @@
-# CleanRam Suite - Advanced PC Care & Memory Optimizer (Zero-Bloat Edition)
+# PC Boost — Windows Optimization & System Utility Suite
 
-A high-performance Windows optimization suite modeled directly after **IObit Advanced SystemCare**, but engineered to be **100% free of marketing popups, adware bundles, upselling, background telemetry, or driver bloat**.
+A fast, native, zero-bloat Windows 10/11 optimization and power-user suite built on **.NET 8** and **pure WPF** with **zero third-party NuGet dependencies**. Designed for real system-level control without marketing popups, telemetry, adware, or bundled drivers.
 
----
-
-## 🚀 Advanced SystemCare Parity & Enhancements
-
-### 1. 🛡️ 1-Click Care (Expandable App & File Tree)
-- **Hierarchical Dropdown / TreeView View:**
-  - **Category Roots:** 🔒 Privacy Sweep, 🧹 Junk File Clean, ⚡ System Optimization.
-  - **Application Groups:** Google Chrome, Microsoft Edge, Mozilla Firefox, Windows Explorer & Recent Items, User Temp (%TEMP%), System Temp & Logs, Windows Prefetch, SoftwareDistribution Update Cache, Memory Crash Dumps, and Recycle Bin.
-  - **File Breakdown:** Expandable sub-items detailing exact file paths, item counts, and size in KB/MB/GB (e.g. `Web & Image Cache - 145 MB (1,200 files)`, `Cookies & Site Storage - 2.1 MB`).
-  - **Granular Checkboxes:** Check or uncheck entire applications or individual sub-items with real-time recalculation of total reclaimable megabytes.
-  - **One-Click Cleaning:** Safe deletion of selected files and instant application of system responsiveness tweaks.
-
-### 2. 🔄 Startup & Next-Reboot Manager
-- **ASC-Style Friendly Display Names:** Queries `FileVersionInfo.FileDescription` and `ProductName` to display clean branded names (e.g., `Microsoft OneDrive`, `Discord`, `Spotify`, `Steam Client Bootstrapper`, `NVIDIA Settings`) rather than raw command strings.
-- **Boot Impact Calculation:** Identifies `High Impact`, `Medium Impact`, and `Low Impact` items based on resource weight.
-- **Smart Recommendations:** `🛡️ Necessary`, `✅ Safe to Disable`, `⚠️ Orphaned / Missing`, `Optional`.
-- **Comprehensive View Filters:**
-  - `All Items`
-  - `Enabled Only`
-  - `Disabled Only`
-  - `Startup Programs` (Registry & Startup folders)
-  - `Windows Services` (Automatic services)
-  - `Scheduled Tasks` (Boot & Logon scheduled tasks)
-  - `Safe to Disable` (Safe startup accelerators)
-- **Actions:** 1-Click Toggle Status (or double-click row), Permanent Delete, and "Open File Location in Explorer".
-
-### 3. 🚀 Turbo Boost Mode (3 Menus / Categories)
-- **Profiles:**
-  - **💼 Work & Productivity Mode:** Preserves network drives, office suites, and Print Spooler; halts background updaters and third-party media launchers.
-  - **🎮 Extreme Gaming Mode:** Halts Windows Search indexer, print queues, telemetry, and non-essential background processes for maximum FPS.
-- **3 Dedicated Menus / Tabs:**
-  1. **⚙️ System Services:** Windows optional services (`WSearch`, `Spooler`, `DiagTrack`, `SysMain`, `DPS`, `TrkWks`, `WerSvc`, `TabletInputService`, `RemoteRegistry`, `XboxServices`, `Fax`, etc.).
-  2. **🏢 Non-Windows Services:** Third-party background services dynamically identified via executable inspection (Google Update, Edge Update, Adobe, Steam, Epic, Razer, Corsair, Logitech, AnyDesk, TeamViewer, etc.).
-  3. **🎮 Background Apps:** Running user-mode apps and tray programs (Discord, Spotify, Steam, OneDrive, torrent clients, gaming overlays).
-- **Search & Bulk Controls:** Real-time search per menu, Select All, Deselect All, and reversible service restoration on Turn Off.
-
-### 4. 🧰 Power User Toolbox
-- **🔧 Win Fix (20 ASC Repairs):**
-  - **Desktop & Explorer:** Rebuild Icon & Thumbnail Cache, Restore Missing Desktop Icons (This PC, Recycle Bin, Control Panel, Network), Restart Windows Explorer, Fix Frozen Taskbar & Start Menu, Reset Windows Search Indexer.
-  - **Network & Internet:** Flush DNS Resolver Cache, Reset Winsock Catalog, Reset TCP/IP Stack, Reset Proxy Hijacks, Release & Renew IP Lease, Restore Default Firewall.
-  - **System & Security Policies:** Enable Task Manager (policy unlock), Enable Registry Editor (regedit unlock), Enable Command Prompt (CMD unlock), Reset Print Spooler Queue, Reset Windows Update Components, Repair Windows Installer (MSI).
-  - **File Associations:** Fix `.EXE`, `.LNK`, `.BAT`, `.REG`, and `.TXT` execution handlers.
-- **🔍 Duplicate File Finder:** Safe directory traversal (skips reparse points & junction loops), asynchronous background scanning with live progress bar and file counters, MD5 hash verification, and batch duplicate deletion.
-- **📦 Large File Finder:** Safe asynchronous drive scanner (supports `C:\`, `D:\`, or custom folders without permission crashes on `System Volume Information`), live progress bar, file size filters (>50MB, >100MB, >500MB, >1GB, >5GB), and "Open in Explorer".
-- **⏰ Auto Shutdown Scheduler:**
-  - **Mode 1:** ⏱️ Duration Countdown (Hours + Minutes).
-  - **Mode 2:** 📅 Specific Date & Time (Calendar Date Picker + Time Picker).
-  - **Mode 3:** 🔄 Daily Schedule at specific hour/minute.
-  - **Actions:** Shut Down, Restart, Sleep, Hibernate, Lock Workstation.
-- **📁 Empty Folder Scanner:** Recursive directory scrubber for orphaned empty directory trees.
-- **🖥️ System Information:** Real-time hardware and kernel specs.
-- **⚙️ System Control (God Mode):** Instant master shortcut to hidden Windows administrative consoles.
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-0078D6)
+![Framework](https://img.shields.io/badge/.NET-8.0%20WPF-512BD4)
+![Languages](https://img.shields.io/badge/UI-English%20%26%20Arabic%20(RTL)-10B981)
+![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
 
-## 📁 Ready-To-Run Distribution
+## Key Features
 
-- **Main Application:** [`ReadyToRun_App/CleanRamBoosterApp.exe`](file:///C:/Users/Yazan/Desktop/Reverce%20Engginer/ReadyToRun_App/CleanRamBoosterApp.exe)
-- **Delphi VCL 32-Bit Source:** [`Delphi_Source/`](file:///C:/Users/Yazan/Desktop/Reverce%20Engginer/Delphi_Source/)
-- **C# .NET 8 Source:** [`CleanRamBoosterApp/`](file:///C:/Users/Yazan/Desktop/Reverce%20Engginer/CleanRamBoosterApp/)
+### 1. Memory & Performance Center (RAM & Speed)
+- Real-time physical memory gauge, segmented RAM usage bar, and instant **Boost & Optimize RAM** action.
+- Native Win32 working-set trimming (`EmptyWorkingSet`) and Standby List purging (`NtSetSystemInformation`).
+- Configurable **Background Auto-Clean** trigger threshold and system tray quick actions.
+
+### 2. Turbo Boost Mode
+- Switch between **Gaming & Heavy Apps** and **Work & Productivity** profiles.
+- Safely stops selected non-essential Windows services, third-party services, and background apps — and restores stopped services cleanly when turned off.
+- Built-in 1-click **System Restore Point** creation before making changes.
+
+### 3. Complete PC Care & Cleanup
+- 12-step determinate **Deep Scan** across multi-profile Chrome, Edge, Brave, Firefox, Windows Explorer recent items, User/System Temp, Prefetch, Windows Update cache, Delivery Optimization, D3D Shader Cache, WER crash dumps, actual Recycle Bin (`SHQueryRecycleBinW`), and real registry responsiveness tweaks.
+- Expandable per-category sub-items with exact paths, file counts, and sizes.
+- Optional **Create System Restore Point before cleaning** checkbox and **HTML Report Export**.
+
+### 4. Startup & Next-Reboot Manager + Live Startup Guard
+- Scans Registry Run/RunOnce (HKCU/HKLM/WOW6432Node), User & Common Startup Folders, Automatic Windows Services, Scheduled Tasks (Task Scheduler 2.0 COM), and Microsoft Store background apps.
+- Smart safety recommendations (`Necessary`, `Optional`, `Safe to Disable`, `Orphaned`), Quick Optimization tab, Ignored list, inline UAC elevation, and **1-Click Undo History**.
+- Real-time **Startup Guard** notifications whenever a new desktop or Microsoft Store app registers itself at boot.
+
+### 5. Pure-WPF Power User Toolbox (Modeless Multi-Window)
+Every utility opens as an independent modeless WPF window with live Dark/Light theme syncing and full Arabic RTL layout:
+- **System Information:** 8 hardware categories, live 1-second CPU LED meter & oscilloscope clock waveform, Physical Memory Slots visual cards bar, separated **Dedicated GPU (dGPU)** vs **Integrated GPU (iGPU)** detection, 64-bit DXGI + WMI live VRAM telemetry, and HTML/Text export.
+- **Win Fix (20 1-Click Repairs):** Desktop/Explorer, Network/Winsock/DNS, System/Security policies, and File Associations — backed by automatic System Restore Points and `.reg` snapshot rollback.
+- **Duplicate File Finder:** Unlimited non-blocking scan with exact size + head/tail MD5 hashing, virtualized grid, Smart Auto-Select (keep 1 original per group), and async deletion.
+- **Large File Finder:** Unlimited drive/folder scanner with size filters, virtualized grid, and smart handling for kernel-locked `hiberfil.sys` and `pagefile.sys`.
+- **Empty Folder Scanner:** Unlimited recursive bottom-up empty folder detection and pruning with zero UI freeze.
+- **Auto Shutdown Scheduler:** Countdown Timer, Specific Date & Time, and Daily Schedule for Shut Down, Restart, Sleep, Hibernate, or Lock Workstation.
+- Quick launchers for **Default Programs** and **Windows God Mode**.
+
+### 6. Settings, Hardware Overview & Diagnostics
+- **Quick Hardware Overview:** CPU physical cores & logical threads, separated dGPU / iGPU, live 3-second VRAM usage & shared memory, installed RAM, OS version, and uptime.
+- Full **Dark & Light Mode**, **English & Arabic (RTL)** language switching, elevated boot task configuration, atomic `settings.json` persistence, rotating `%AppData%\CleanRamBooster\app.log`, **Open Logs Folder**, and **Export Diagnostics Bundle**.
+
+---
+
+## Building from Source
+
+### Prerequisites
+- Windows 10 or Windows 11 (x64)
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- *(Optional, for building `setup.exe`)* [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+
+### Quick Build & Test
+```powershell
+# Build solution (Release)
+dotnet build PCBoost.sln -c Release
+
+# Run automated offline test suite (no NuGet packages required)
+dotnet run --project CleanRamBoosterApp.Tests\CleanRamBoosterApp.Tests.csproj -c Release --no-build
+```
+
+### Full Release Packaging (Portable + `setup.exe` + Optional Authenticode Signing)
+```powershell
+# Unsigned release build (app + tests + portable zip + setup.exe)
+.\build-release.ps1 -NoSign
+
+# Signed release build with a code-signing certificate (.pfx)
+.\build-release.ps1 -CertPath "path\to\certificate.pfx" -CertPassword "your-password"
+```
+See [HANDOVER.md](HANDOVER.md) for detailed architecture notes and local signing setup (`scripts/Setup-CodeSigning.ps1`).
+
+---
+
+## Project Structure
+
+```text
+├── PCBoost.sln                       # Visual Studio / dotnet solution
+├── build-release.ps1                 # End-to-end build, test, sign & packaging script
+├── scripts/Setup-CodeSigning.ps1     # Local SHA-256 Authenticode cert helper
+├── CleanRamBoosterApp/               # Main .NET 8 WPF application
+│   ├── WpfUI/                        # Main shell, views, themes, icons, dialogs
+│   │   └── Toolbox/                  # 6 pure-WPF Power User Toolbox windows
+│   ├── Services/                     # Native Win32/DXGI/WMI/COM services
+│   ├── Models/                       # Data models
+│   ├── Installer/PCBoostSetup.iss    # Inno Setup 6 installer script (EN + AR)
+│   └── Resources/                    # Application icons
+└── CleanRamBoosterApp.Tests/         # Zero-dependency automated test suite
+```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

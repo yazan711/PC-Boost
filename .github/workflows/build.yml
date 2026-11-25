@@ -1,0 +1,31 @@
+name: Build PC Boost
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Solution (Release)
+        run: dotnet build PCBoost.sln -c Release --nologo
+
+      - name: Publish Self-Contained win-x64 ReadyToRun
+        run: dotnet publish CleanRamBoosterApp\CleanRamBoosterApp.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o artifacts\Portable-PC-Boost --nologo
+
+      - name: Upload Portable Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Portable-PC-Boost-win-x64
+          path: artifacts\Portable-PC-Boost
