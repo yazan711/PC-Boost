@@ -335,9 +335,8 @@ namespace CleanRamBoosterApp.WpfUI
             btnViewDetails.Click += (s, e) =>
             {
                 var rep = cachedReport ?? hwService.GetDetailedReport();
-                var sysWin = new Forms.ToolboxSystemInfoForm(rep);
+                var sysWin = new Toolbox.ToolboxSystemInfoWindow(rep);
                 sysWin.Show();
-                sysWin.BringToFront();
                 sysWin.Activate();
             };
 

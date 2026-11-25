@@ -6,11 +6,10 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms;
-using CleanRamBoosterApp.Forms;
 using CleanRamBoosterApp.Models;
 using CleanRamBoosterApp.Services;
 using CleanRamBoosterApp.WpfUI;
+using CleanRamBoosterApp.WpfUI.Toolbox;
 using Application = System.Windows.Application;
 
 namespace CleanRamBoosterApp.Tests;
@@ -43,7 +42,7 @@ internal static class Program
         RunTest("SettingsService Atomic Save & Reload", TestSettingsAtomicSave);
         RunTest("DiagnosticLogger Write & Support Bundle Export", TestDiagnosticLogger);
         RunTest("CareService Deep Scan Determinate Progress", TestCareDeepScan);
-        RunTest("WPF Views & WinForms VirtualMode Smoke (Dark/Light + EN/AR)", TestUiSmokeAndVirtualMode);
+        RunTest("WPF Views & All 6 WPF Toolbox Windows (Dark/Light + EN/AR)", TestUiSmokeAndVirtualMode);
 
         Console.WriteLine("============================================================");
         Console.WriteLine($"  Summary: {_passed} passed, {_failed} failed");
@@ -342,22 +341,30 @@ internal static class Program
                 }
             }
 
-            // Verify all three disk scanner WinForms tools run in VirtualMode = true
-            using (var dupForm = new ToolboxDuplicateFinderForm())
-            {
-                var lv = typeof(ToolboxDuplicateFinderForm).GetField("lvDuplicates", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(dupForm) as ListView;
-                Assert(lv != null && lv.VirtualMode, "ToolboxDuplicateFinderForm must use VirtualMode = true");
-            }
-            using (var largeForm = new ToolboxLargeFilesForm())
-            {
-                var lv = typeof(ToolboxLargeFilesForm).GetField("lvFiles", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(largeForm) as ListView;
-                Assert(lv != null && lv.VirtualMode, "ToolboxLargeFilesForm must use VirtualMode = true");
-            }
-            using (var emptyForm = new ToolboxEmptyFoldersForm())
-            {
-                var lv = typeof(ToolboxEmptyFoldersForm).GetField("lvFolders", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(emptyForm) as ListView;
-                Assert(lv != null && lv.VirtualMode, "ToolboxEmptyFoldersForm must use VirtualMode = true");
-            }
+            // Verify all 6 pure-WPF Toolbox windows instantiate cleanly & disk scanners use row virtualization
+            var dupWin = new ToolboxDuplicateFinderWindow();
+            Assert(dupWin.IsVirtualized, "ToolboxDuplicateFinderWindow must use WPF row virtualization");
+            dupWin.RefreshTheme();
+
+            var largeWin = new ToolboxLargeFilesWindow();
+            Assert(largeWin.IsVirtualized, "ToolboxLargeFilesWindow must use WPF row virtualization");
+            largeWin.RefreshTheme();
+
+            var emptyWin = new ToolboxEmptyFoldersWindow();
+            Assert(emptyWin.IsVirtualized, "ToolboxEmptyFoldersWindow must use WPF row virtualization");
+            emptyWin.RefreshTheme();
+
+            var autoWin = new ToolboxAutoShutdownWindow();
+            autoWin.RefreshTheme();
+
+            var winFixWin = new ToolboxWinFixWindow();
+            winFixWin.RefreshTheme();
+
+            var sysInfoWin = new ToolboxSystemInfoWindow(new HardwareInfoService().GetDetailedReport());
+            sysInfoWin.SelectCategory(2); // CPU live chart
+            sysInfoWin.SelectCategory(3); // Memory slots visual bar
+            sysInfoWin.RefreshTheme();
+            sysInfoWin.Close();
         }
         finally
         {

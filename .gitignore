@@ -7,8 +7,12 @@ publish/
 *.suo
 *.cache
 
-# Local secrets & logs
+# Local secrets, signing keys & logs
 .env
+certs/
+*.pfx
+*.p12
+*.snk
 *.log
 out.txt
 

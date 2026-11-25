@@ -202,6 +202,49 @@ namespace CleanRamBoosterApp.WpfUI
             ["Activity"] = new IconDef(
                 strokes: new[] {
                     "M3 12 H7 L10 5 L14 19 L17 12 H21"
+                }),
+            ["Stop"] = new IconDef(
+                strokes: new[] {
+                    "M6.5 6.5 H17.5 V17.5 H6.5 Z"
+                }),
+            ["OsWindows"] = new IconDef(
+                strokes: new[] {
+                    "M3.5 4.5 H11 V11 H3.5 Z",
+                    "M13 4.5 H20.5 V11 H13 Z",
+                    "M3.5 13 H11 V19.5 H3.5 Z",
+                    "M13 13 H20.5 V19.5 H13 Z"
+                }),
+            ["Cpu"] = new IconDef(
+                strokes: new[] {
+                    "M7 7 H17 V17 H7 Z",
+                    "M10 10 H14 V14 H10 Z",
+                    "M9 3.5 V7 M15 3.5 V7 M9 17 V20.5 M15 17 V20.5",
+                    "M3.5 9 H7 M3.5 15 H7 M17 9 H20.5 M17 15 H20.5"
+                }),
+            ["Memory"] = new IconDef(
+                strokes: new[] {
+                    "M3.5 8 H20.5 V16 H3.5 Z",
+                    "M7 11 V13 M10.5 11 V13 M14 11 V13 M17.5 11 V13",
+                    "M6 16 V19 M10 16 V19 M14 16 V19 M18 16 V19"
+                }),
+            ["Drive"] = new IconDef(
+                strokes: new[] {
+                    "M4 6 A1.5 1.5 0 0 1 5.5 4.5 H18.5 A1.5 1.5 0 0 1 20 6 V18 A1.5 1.5 0 0 1 18.5 19.5 H5.5 A1.5 1.5 0 0 1 4 18 Z",
+                    "M4 14.5 H20",
+                    "M16.5 17 H16.51"
+                }),
+            ["Network"] = new IconDef(
+                strokes: new[] {
+                    "M5 12.5 A10 10 0 0 1 19 12.5",
+                    "M8 15.5 A6 6 0 0 1 16 15.5",
+                    "M12 18.5 H12.01",
+                    "M2.5 9.5 A13.5 13.5 0 0 1 21.5 9.5"
+                }),
+            ["Keyboard"] = new IconDef(
+                strokes: new[] {
+                    "M3 7 A1.5 1.5 0 0 1 4.5 5.5 H19.5 A1.5 1.5 0 0 1 21 7 V17 A1.5 1.5 0 0 1 19.5 18.5 H4.5 A1.5 1.5 0 0 1 3 17 Z",
+                    "M6.5 9.5 H6.51 M10 9.5 H10.01 M13.5 9.5 H13.51 M17 9.5 H17.01",
+                    "M7.5 14.5 H16.5"
                 })
         };
 

@@ -664,6 +664,33 @@ namespace CleanRamBoosterApp.WpfUI
 
         public static string FormatRam(long bytes) => FormatBytes(bytes);
 
+        private static BitmapImage? _cachedWindowIcon;
+        public static ImageSource? GetWindowIconSource()
+        {
+            if (_cachedWindowIcon != null) return _cachedWindowIcon;
+            try
+            {
+                UITheme.EnsureAppIconLoaded();
+                if (UITheme.AppIconBitmap == null) return null;
+                using var ms = new MemoryStream();
+                UITheme.AppIconBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                ms.Seek(0, SeekOrigin.Begin);
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.DecodePixelWidth = 64;
+                bmp.StreamSource = ms;
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                _cachedWindowIcon = bmp;
+                return _cachedWindowIcon;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public static Image? CreateMiniBrandLogo(double size = 20)
         {
             try

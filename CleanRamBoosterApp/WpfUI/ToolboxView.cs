@@ -16,7 +16,7 @@ namespace CleanRamBoosterApp.WpfUI
         private readonly TextBlock lblSub;
         private readonly WrapPanel wrapPanel;
         private readonly ScrollViewer scrollViewer;
-        private readonly Dictionary<string, System.Windows.Forms.Form> openToolWindows = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Toolbox.ToolboxWindowBase> openToolWindows = new(StringComparer.OrdinalIgnoreCase);
 
         public ToolboxView()
         {
@@ -80,53 +80,39 @@ namespace CleanRamBoosterApp.WpfUI
             RefreshTheme();
         }
 
-        private void OpenToolWindow(string toolKey, Func<System.Windows.Forms.Form> factory)
+        private void OpenToolWindow(string toolKey, Func<Toolbox.ToolboxWindowBase> factory)
         {
-            if (openToolWindows.TryGetValue(toolKey, out var existing) && !existing.IsDisposed)
+            if (openToolWindows.TryGetValue(toolKey, out var existing) && existing.IsLoaded)
             {
-                if (existing.WindowState == System.Windows.Forms.FormWindowState.Minimized)
+                if (existing.WindowState == WindowState.Minimized)
                 {
-                    existing.WindowState = System.Windows.Forms.FormWindowState.Normal;
+                    existing.WindowState = WindowState.Normal;
                 }
                 existing.Show();
-                existing.BringToFront();
                 existing.Activate();
                 return;
             }
 
-            var form = factory();
-            form.ShowInTaskbar = true;
-            form.MinimizeBox = true;
-            form.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            openToolWindows[toolKey] = form;
-            form.FormClosed += (_, _) =>
-            {
-                openToolWindows.Remove(toolKey);
-                try { form.Dispose(); } catch { }
-            };
-            form.Show();
-            form.BringToFront();
-            form.Activate();
+            var win = factory();
+            win.ShowInTaskbar = true;
+            win.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            openToolWindows[toolKey] = win;
+            win.Closed += (_, _) => openToolWindows.Remove(toolKey);
+            win.Show();
+            win.Activate();
         }
 
         public void CloseAllOpenToolWindows()
         {
             var snapshot = openToolWindows.Values.ToList();
             openToolWindows.Clear();
-            foreach (var form in snapshot)
+            foreach (var win in snapshot)
             {
-                try
-                {
-                    if (!form.IsDisposed)
-                    {
-                        form.Close();
-                    }
-                }
-                catch { }
+                try { win.Close(); } catch { }
             }
         }
 
-        public int OpenToolWindowCount => openToolWindows.Count(kv => !kv.Value.IsDisposed);
+        public int OpenToolWindowCount => openToolWindows.Count(kv => kv.Value.IsLoaded);
 
         private void BuildToolCards()
         {
@@ -139,7 +125,7 @@ namespace CleanRamBoosterApp.WpfUI
                 LocalizationService.T("TagRepair", "REPAIR"),
                 WpfTheme.ColorPrimary,
                 LocalizationService.T("ToolWinFixDesc", "1-Click repair for broken desktop icons, flush DNS & winsock, and restart Windows Explorer."),
-                () => OpenToolWindow("WinFix", () => new Forms.ToolboxWinFixForm()),
+                () => OpenToolWindow("WinFix", () => new Toolbox.ToolboxWinFixWindow()),
                 requiresAdmin: true);
 
             // 2. System Information
@@ -149,7 +135,7 @@ namespace CleanRamBoosterApp.WpfUI
                 LocalizationService.T("TagSystem", "SYSTEM"),
                 WpfTheme.ColorPurple,
                 LocalizationService.T("ToolSysInfoDesc", "Hardware specs: CPU model/cores/clock, GPU, RAM, Motherboard, BIOS, Disks, and Uptime."),
-                () => OpenToolWindow("SystemInfo", () => new Forms.ToolboxSystemInfoForm()),
+                () => OpenToolWindow("SystemInfo", () => new Toolbox.ToolboxSystemInfoWindow()),
                 requiresAdmin: false);
 
             // 3. Auto Shutdown
@@ -159,7 +145,7 @@ namespace CleanRamBoosterApp.WpfUI
                 LocalizationService.T("TagSystem", "SYSTEM"),
                 WpfTheme.ColorPurple,
                 LocalizationService.T("ToolAutoShutdownDesc", "Schedule automatic PC shutdown, restart, sleep, or hibernate with countdown timer."),
-                () => OpenToolWindow("AutoShutdown", () => new Forms.ToolboxAutoShutdownForm()),
+                () => OpenToolWindow("AutoShutdown", () => new Toolbox.ToolboxAutoShutdownWindow()),
                 requiresAdmin: true);
 
             // 4. Duplicate Finder
@@ -169,7 +155,7 @@ namespace CleanRamBoosterApp.WpfUI
                 LocalizationService.T("TagStorage", "STORAGE"),
                 WpfTheme.ColorSuccess,
                 LocalizationService.T("ToolDuplicateDesc", "Scan directory trees and eliminate identical duplicate files by size and MD5 hash."),
-                () => OpenToolWindow("DuplicateFinder", () => new Forms.ToolboxDuplicateFinderForm()),
+                () => OpenToolWindow("DuplicateFinder", () => new Toolbox.ToolboxDuplicateFinderWindow()),
                 requiresAdmin: true);
 
             // 5. Large Files Finder
@@ -179,7 +165,7 @@ namespace CleanRamBoosterApp.WpfUI
                 LocalizationService.T("TagStorage", "STORAGE"),
                 WpfTheme.ColorSuccess,
                 LocalizationService.T("ToolLargeFilesDesc", "Identify and locate storage space hogs (>100MB, >500MB, >1GB) in seconds."),
-                () => OpenToolWindow("LargeFiles", () => new Forms.ToolboxLargeFilesForm()),
+                () => OpenToolWindow("LargeFiles", () => new Toolbox.ToolboxLargeFilesWindow()),
                 requiresAdmin: true);
 
             // 6. Empty Folders Scanner
@@ -189,7 +175,7 @@ namespace CleanRamBoosterApp.WpfUI
                 LocalizationService.T("TagStorage", "STORAGE"),
                 WpfTheme.ColorSuccess,
                 LocalizationService.T("ToolEmptyFoldersDesc", "Recursively search directory trees and clean abandoned empty folder structures."),
-                () => OpenToolWindow("EmptyFolders", () => new Forms.ToolboxEmptyFoldersForm()),
+                () => OpenToolWindow("EmptyFolders", () => new Toolbox.ToolboxEmptyFoldersWindow()),
                 requiresAdmin: true);
 
             // 7. Default Programs
@@ -358,6 +344,10 @@ namespace CleanRamBoosterApp.WpfUI
             lblHead.Foreground = WpfTheme.TextPrimaryBrush;
             lblSub.Foreground = WpfTheme.TextSecondaryBrush;
             BuildToolCards();
+            foreach (var win in openToolWindows.Values.ToList())
+            {
+                try { if (win.IsLoaded) win.RefreshTheme(); } catch { }
+            }
         }
     }
 }
