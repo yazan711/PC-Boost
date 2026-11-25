@@ -40,6 +40,7 @@ internal static class Program
         RunTest("DiskTools Large File Finder (Unlimited & Ordered)", TestDiskToolsLargeFiles);
         RunTest("StartupHistoryService Persist/Pop/Push/Cap", TestStartupHistoryService);
         RunTest("SettingsService Atomic Save & Reload", TestSettingsAtomicSave);
+        RunTest("Auto-Clean 15-Min Cooldown & Dashboard Control Persistence", TestAutoCleanCooldownAndDashboardWiring);
         RunTest("DiagnosticLogger Write & Support Bundle Export", TestDiagnosticLogger);
         RunTest("CareService Deep Scan Determinate Progress", TestCareDeepScan);
         RunTest("WPF Views & All 6 WPF Toolbox Windows (Dark/Light + EN/AR)", TestUiSmokeAndVirtualMode);
@@ -274,6 +275,59 @@ internal static class Program
         finally
         {
             SettingsService.Instance.Update(s => s.CreateRestorePointBeforeCare = orig);
+        }
+    }
+
+    private static void TestAutoCleanCooldownAndDashboardWiring()
+    {
+        var fresh = new AppSettings();
+        Assert(fresh.AutoCleanIntervalSeconds == 900, $"Default AutoCleanIntervalSeconds must be 900s (15 min), got {fresh.AutoCleanIntervalSeconds}");
+
+        var legacy = SettingsService.NormalizeSettings(new AppSettings { AutoCleanIntervalSeconds = 60, AutoCleanThresholdPercent = 80 });
+        Assert(legacy.AutoCleanIntervalSeconds == 900, $"Legacy 60s cooldown must upgrade to 900s (15 min), got {legacy.AutoCleanIntervalSeconds}");
+        Assert(legacy.AutoCleanThresholdPercent == 80, "Valid 80% threshold must be preserved");
+
+        var cur = SettingsService.Instance.Current;
+        bool origAutoClean = cur.AutoCleanEnabled;
+        int origThreshold = cur.AutoCleanThresholdPercent;
+        bool origMinTray = cur.MinimizeToTray;
+        var origLang = LocalizationService.CurrentLanguage;
+        try
+        {
+            var dash = new DashboardView();
+            var settingsView = new SettingsView();
+
+            // Select 80% Load (index 2) and verify persistence + survival across language switch
+            dash.CbThreshold.SelectedIndex = 2;
+            Assert(SettingsService.Instance.Current.AutoCleanThresholdPercent == 80, "Selecting 80% Load on Dashboard must save 80%");
+
+            LocalizationService.SetLanguage(AppLanguage.Arabic);
+            dash.ApplyLanguage();
+            Assert(SettingsService.Instance.Current.AutoCleanThresholdPercent == 80, "Switching language must preserve 80% threshold");
+            Assert(dash.CbThreshold.SelectedIndex == 2, "Arabic threshold dropdown must stay at index 2 (80%)");
+
+            // Toggle Auto-Clean off/on
+            dash.ChkAutoClean.IsChecked = false;
+            Assert(!SettingsService.Instance.Current.AutoCleanEnabled, "Unchecking Auto-Clean must save false");
+            Assert(!dash.CbThreshold.IsEnabled, "Threshold ComboBox must be disabled when Auto-Clean is off");
+            dash.ChkAutoClean.IsChecked = true;
+            Assert(SettingsService.Instance.Current.AutoCleanEnabled, "Checking Auto-Clean must save true");
+            Assert(dash.CbThreshold.IsEnabled, "Threshold ComboBox must re-enable when Auto-Clean is on");
+
+            // Toggle Keep in Tray and verify SettingsView sync
+            dash.ChkMinimizeToTray.IsChecked = !origMinTray;
+            Assert(SettingsService.Instance.Current.MinimizeToTray == !origMinTray, "Dashboard Keep in Tray toggle must persist");
+            settingsView.SyncSettingsControls();
+        }
+        finally
+        {
+            LocalizationService.SetLanguage(origLang);
+            SettingsService.Instance.Update(st =>
+            {
+                st.AutoCleanEnabled = origAutoClean;
+                st.AutoCleanThresholdPercent = origThreshold;
+                st.MinimizeToTray = origMinTray;
+            });
         }
     }
 

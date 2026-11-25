@@ -79,8 +79,12 @@ namespace CleanRamBoosterApp.WpfUI
         private NotifyIcon trayIcon = null!;
         private ContextMenuStrip trayMenu = null!;
         private IntPtr currentHIcon = IntPtr.Zero;
+        private System.Drawing.Icon? currentTrayIcon;
+        private int lastTrayPercent = -1;
 
-        // Monitoring Timer
+        // Monitoring Timer (1s when visible, 3s when hidden in tray)
+        private static readonly TimeSpan ActiveMonitorInterval = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan TrayMonitorInterval = TimeSpan.FromSeconds(3);
         private readonly DispatcherTimer timer;
         private DateTime lastAutoCleanTime = DateTime.MinValue;
         private bool isExplicitExit = false;
@@ -398,7 +402,7 @@ namespace CleanRamBoosterApp.WpfUI
             InitializeTray();
 
             // Monitoring Timer
-            timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000) };
+            timer = new DispatcherTimer { Interval = startInTray ? TrayMonitorInterval : ActiveMonitorInterval };
             timer.Tick += (s, e) => UpdateMemoryMonitoring();
             timer.Start();
 
@@ -410,9 +414,22 @@ namespace CleanRamBoosterApp.WpfUI
                 UpdateMemoryMonitoring();
                 StartBackgroundWorkOnce();
             };
+            StateChanged += (s, e) =>
+            {
+                if (IsVisible && WindowState != WindowState.Minimized)
+                {
+                    if (timer.Interval != ActiveMonitorInterval) timer.Interval = ActiveMonitorInterval;
+                    UpdateMemoryMonitoring();
+                }
+                else
+                {
+                    if (timer.Interval != TrayMonitorInterval) timer.Interval = TrayMonitorInterval;
+                }
+            };
             Closing += OnWindowClosing;
             WpfTheme.ThemeChanged += RefreshAllThemes;
             LocalizationService.OnLanguageChanged += ApplyAllLanguage;
+            SettingsService.Instance.OnSettingsChanged += OnSettingsChangedHandler;
 
             ApplyAllLanguage();
             RefreshAllThemes();
@@ -609,51 +626,62 @@ namespace CleanRamBoosterApp.WpfUI
             try
             {
                 var info = memService.GetMemoryInfo();
-
-                // Dashboard elements
-                viewDashboard.Gauge.Percentage = info.LoadPercentage;
-                viewDashboard.RamBar.SetValues(info.UsedPhysBytes, info.AvailPhysBytes);
-
-                viewDashboard.CardUsed.Value = WpfTheme.FormatBytes((long)info.UsedPhysBytes);
-                viewDashboard.CardAvailable.Value = WpfTheme.FormatBytes((long)info.AvailPhysBytes);
-                viewDashboard.ChipTotalRam.Value = WpfTheme.FormatBytes((long)info.TotalPhysBytes);
-
-                int usedPct = Math.Clamp(info.LoadPercentage, 0, 100);
-                int availPct = 100 - usedPct;
-                viewDashboard.ChipInUse.Value = LocalizationService.IsArabic
-                    ? $"\u200E{WpfTheme.FormatBytes((long)info.UsedPhysBytes)} ({usedPct}%)\u200E"
-                    : $"{WpfTheme.FormatBytes((long)info.UsedPhysBytes)} ({usedPct}%)";
-                viewDashboard.ChipAvailable.Value = LocalizationService.IsArabic
-                    ? $"\u200E{WpfTheme.FormatBytes((long)info.AvailPhysBytes)} ({availPct}%)\u200E"
-                    : $"{WpfTheme.FormatBytes((long)info.AvailPhysBytes)} ({availPct}%)";
-
-                // Sidebar mini bar
-                pbMiniRam.Value = info.LoadPercentage;
-                lblMiniRamPercent.Text = $"{info.LoadPercentage}%";
-                if (info.LoadPercentage >= 85)
+                bool isUiVisible = IsVisible && WindowState != WindowState.Minimized;
+                var desiredInterval = isUiVisible ? ActiveMonitorInterval : TrayMonitorInterval;
+                if (timer.Interval != desiredInterval)
                 {
-                    pbMiniRam.Foreground = WpfTheme.DangerBrush;
-                    lblMiniRamPercent.Foreground = WpfTheme.DangerBrush;
-                }
-                else if (info.LoadPercentage >= 70)
-                {
-                    pbMiniRam.Foreground = new SolidColorBrush(WpfTheme.ColorWarning);
-                    lblMiniRamPercent.Foreground = new SolidColorBrush(WpfTheme.ColorWarning);
-                }
-                else
-                {
-                    pbMiniRam.Foreground = WpfTheme.PrimaryBrush;
-                    lblMiniRamPercent.Foreground = WpfTheme.PrimaryBrush;
+                    timer.Interval = desiredInterval;
                 }
 
-                // Tray icon update
+                // Skip hidden Dashboard / sidebar WPF updates while minimized to tray
+                if (isUiVisible)
+                {
+                    // Dashboard elements
+                    viewDashboard.Gauge.Percentage = info.LoadPercentage;
+                    viewDashboard.RamBar.SetValues(info.UsedPhysBytes, info.AvailPhysBytes);
+
+                    viewDashboard.CardUsed.Value = WpfTheme.FormatBytes((long)info.UsedPhysBytes);
+                    viewDashboard.CardAvailable.Value = WpfTheme.FormatBytes((long)info.AvailPhysBytes);
+                    viewDashboard.ChipTotalRam.Value = WpfTheme.FormatBytes((long)info.TotalPhysBytes);
+
+                    int usedPct = Math.Clamp(info.LoadPercentage, 0, 100);
+                    int availPct = 100 - usedPct;
+                    viewDashboard.ChipInUse.Value = LocalizationService.IsArabic
+                        ? $"\u200E{WpfTheme.FormatBytes((long)info.UsedPhysBytes)} ({usedPct}%)\u200E"
+                        : $"{WpfTheme.FormatBytes((long)info.UsedPhysBytes)} ({usedPct}%)";
+                    viewDashboard.ChipAvailable.Value = LocalizationService.IsArabic
+                        ? $"\u200E{WpfTheme.FormatBytes((long)info.AvailPhysBytes)} ({availPct}%)\u200E"
+                        : $"{WpfTheme.FormatBytes((long)info.AvailPhysBytes)} ({availPct}%)";
+
+                    // Sidebar mini bar
+                    pbMiniRam.Value = info.LoadPercentage;
+                    lblMiniRamPercent.Text = $"{info.LoadPercentage}%";
+                    if (info.LoadPercentage >= 85)
+                    {
+                        pbMiniRam.Foreground = WpfTheme.DangerBrush;
+                        lblMiniRamPercent.Foreground = WpfTheme.DangerBrush;
+                    }
+                    else if (info.LoadPercentage >= 70)
+                    {
+                        pbMiniRam.Foreground = new SolidColorBrush(WpfTheme.ColorWarning);
+                        lblMiniRamPercent.Foreground = new SolidColorBrush(WpfTheme.ColorWarning);
+                    }
+                    else
+                    {
+                        pbMiniRam.Foreground = WpfTheme.PrimaryBrush;
+                        lblMiniRamPercent.Foreground = WpfTheme.PrimaryBrush;
+                    }
+                }
+
+                // Tray icon update (cached: only redraws when percentage changes)
                 UpdateTrayIcon(info.LoadPercentage);
 
-                // Auto-clean evaluation
+                // Auto-clean evaluation (with 15-minute cooldown to protect SSD/NVMe/HDD)
                 var settings = SettingsService.Instance.Current;
+                int cooldownSeconds = Math.Max(settings.AutoCleanIntervalSeconds, AppSettings.DefaultAutoCleanCooldownSeconds);
                 if (!isAutoCleanRunning && !isManualBoostRunning && settings.AutoCleanEnabled && info.LoadPercentage >= settings.AutoCleanThresholdPercent)
                 {
-                    if ((DateTime.Now - lastAutoCleanTime).TotalSeconds >= settings.AutoCleanIntervalSeconds)
+                    if ((DateTime.Now - lastAutoCleanTime).TotalSeconds >= cooldownSeconds)
                     {
                         lastAutoCleanTime = DateTime.Now;
                         _ = RunAutoCleanAsync(settings.AutoCleanThresholdPercent, settings.DisableRamCleanNotifications);
@@ -726,6 +754,7 @@ namespace CleanRamBoosterApp.WpfUI
 
         private void UpdateTrayIcon(int percent)
         {
+            if (percent == lastTrayPercent && currentHIcon != IntPtr.Zero) return;
             try
             {
                 using var bmp = new Bitmap(32, 32);
@@ -752,10 +781,24 @@ namespace CleanRamBoosterApp.WpfUI
                 }
 
                 IntPtr newHIcon = bmp.GetHicon();
-                trayIcon.Icon = System.Drawing.Icon.FromHandle(newHIcon);
-                if (currentHIcon != IntPtr.Zero) DestroyIcon(currentHIcon);
+                var newIcon = System.Drawing.Icon.FromHandle(newHIcon);
+                var oldIcon = currentTrayIcon;
+                IntPtr oldHIcon = currentHIcon;
+
+                trayIcon.Icon = newIcon;
+                currentTrayIcon = newIcon;
                 currentHIcon = newHIcon;
+                lastTrayPercent = percent;
                 trayIcon.Text = $"PC Boost: {percent}% RAM";
+
+                if (oldIcon != null)
+                {
+                    try { oldIcon.Dispose(); } catch { }
+                }
+                if (oldHIcon != IntPtr.Zero)
+                {
+                    try { DestroyIcon(oldHIcon); } catch { }
+                }
             }
             catch { }
         }
@@ -770,7 +813,35 @@ namespace CleanRamBoosterApp.WpfUI
             {
                 WindowState = WindowState.Normal;
             }
+            if (timer.Interval != ActiveMonitorInterval)
+            {
+                timer.Interval = ActiveMonitorInterval;
+            }
+            UpdateMemoryMonitoring();
             Activate();
+        }
+
+        private void OnSettingsChangedHandler()
+        {
+            if (isExplicitExit) return;
+            try
+            {
+                if (Dispatcher.CheckAccess())
+                {
+                    viewDashboard.SyncSettingsControls();
+                    viewSettings.SyncSettingsControls();
+                }
+                else
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (isExplicitExit) return;
+                        viewDashboard.SyncSettingsControls();
+                        viewSettings.SyncSettingsControls();
+                    }));
+                }
+            }
+            catch { }
         }
 
         private void OnNewStartupItemDetected(Models.StartupItem item)
@@ -894,6 +965,7 @@ namespace CleanRamBoosterApp.WpfUI
         private void ExitApplication()
         {
             isExplicitExit = true;
+            try { SettingsService.Instance.OnSettingsChanged -= OnSettingsChangedHandler; } catch { }
             try { activeAlertWindow?.Close(); } catch { }
             try { viewToolbox.CloseAllOpenToolWindows(); } catch { }
             try { startupMonitor.Dispose(); } catch { }
@@ -906,6 +978,11 @@ namespace CleanRamBoosterApp.WpfUI
                 }
             }
             catch { }
+            if (currentTrayIcon != null)
+            {
+                try { currentTrayIcon.Dispose(); } catch { }
+                currentTrayIcon = null;
+            }
             if (currentHIcon != IntPtr.Zero)
             {
                 try { DestroyIcon(currentHIcon); } catch { }
@@ -925,6 +1002,10 @@ namespace CleanRamBoosterApp.WpfUI
             {
                 e.Cancel = true;
                 Hide();
+                if (timer.Interval != TrayMonitorInterval)
+                {
+                    timer.Interval = TrayMonitorInterval;
+                }
                 TrimMemoryForBackground();
             }
             else

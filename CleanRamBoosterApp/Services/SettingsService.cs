@@ -6,13 +6,15 @@ namespace CleanRamBoosterApp.Services
 {
     public class AppSettings
     {
+        public const int DefaultAutoCleanCooldownSeconds = 900; // 15 minutes (SSD/NVMe/HDD friendly)
+
         public bool IsDarkMode { get; set; } = false;
         public bool StartWithWindows { get; set; } = false;
         public bool RunAsAdminOnBoot { get; set; } = false;
         public bool MinimizeToTray { get; set; } = true;
         public bool AutoCleanEnabled { get; set; } = true;
         public int AutoCleanThresholdPercent { get; set; } = 85;
-        public int AutoCleanIntervalSeconds { get; set; } = 60;
+        public int AutoCleanIntervalSeconds { get; set; } = DefaultAutoCleanCooldownSeconds;
         public bool TurboGameMode { get; set; } = false;
         public bool DisableRamCleanNotifications { get; set; } = false;
         public bool StartupAlertEnabled { get; set; } = true;
@@ -62,7 +64,7 @@ namespace CleanRamBoosterApp.Services
                 {
                     string json = File.ReadAllText(configFilePath);
                     var settings = JsonSerializer.Deserialize<AppSettings>(json);
-                    if (settings != null) return settings;
+                    if (settings != null) return NormalizeSettings(settings);
                 }
             }
             catch (Exception ex)
@@ -75,13 +77,27 @@ namespace CleanRamBoosterApp.Services
                     if (File.Exists(bak))
                     {
                         var recovered = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(bak));
-                        if (recovered != null) return recovered;
+                        if (recovered != null) return NormalizeSettings(recovered);
                     }
                 }
                 catch { }
             }
 
             return new AppSettings();
+        }
+
+        public static AppSettings NormalizeSettings(AppSettings settings)
+        {
+            // Upgrade legacy 60s cooldown or invalid values to the 15-minute (900s) minimum cooldown
+            if (settings.AutoCleanIntervalSeconds < AppSettings.DefaultAutoCleanCooldownSeconds)
+            {
+                settings.AutoCleanIntervalSeconds = AppSettings.DefaultAutoCleanCooldownSeconds;
+            }
+            if (settings.AutoCleanThresholdPercent < 70 || settings.AutoCleanThresholdPercent > 90)
+            {
+                settings.AutoCleanThresholdPercent = 85;
+            }
+            return settings;
         }
 
         public void SaveSettings()

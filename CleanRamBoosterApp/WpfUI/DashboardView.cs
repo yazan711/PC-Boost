@@ -60,6 +60,7 @@ namespace CleanRamBoosterApp.WpfUI
         private bool lastTurboGameMode = true;
         private long lastTurboSavedBytes;
         private bool isBoostBusy;
+        private bool isSyncingSettings;
         private int lastStartupOptimizableCount;
         private int lastStartupUnknownCount;
 
@@ -224,6 +225,8 @@ namespace CleanRamBoosterApp.WpfUI
                 IsChecked = SettingsService.Instance.Current.AutoCleanEnabled,
                 Margin = new Thickness(0, 0, 20, 0)
             };
+            ChkAutoClean.Checked += OnAutoCleanToggled;
+            ChkAutoClean.Unchecked += OnAutoCleanToggled;
             Grid.SetColumn(ChkAutoClean, 0);
             settingsGrid.Children.Add(ChkAutoClean);
 
@@ -243,7 +246,8 @@ namespace CleanRamBoosterApp.WpfUI
                 Width = 128,
                 Height = 32,
                 FontSize = 12.5,
-                VerticalAlignment = VerticalAlignment.Center
+                VerticalAlignment = VerticalAlignment.Center,
+                IsEnabled = SettingsService.Instance.Current.AutoCleanEnabled
             };
             CbThreshold.Items.Add("70% Load");
             CbThreshold.Items.Add("75% Load");
@@ -252,6 +256,7 @@ namespace CleanRamBoosterApp.WpfUI
             CbThreshold.Items.Add("90% Load");
             int initialIdx = Math.Clamp((SettingsService.Instance.Current.AutoCleanThresholdPercent - 70) / 5, 0, 4);
             CbThreshold.SelectedIndex = initialIdx;
+            CbThreshold.SelectionChanged += OnThresholdSelectionChanged;
             Grid.SetColumn(CbThreshold, 2);
             settingsGrid.Children.Add(CbThreshold);
 
@@ -264,6 +269,8 @@ namespace CleanRamBoosterApp.WpfUI
                 HorizontalAlignment = HorizontalAlignment.Right,
                 IsChecked = SettingsService.Instance.Current.MinimizeToTray
             };
+            ChkMinimizeToTray.Checked += OnMinimizeToTrayToggled;
+            ChkMinimizeToTray.Unchecked += OnMinimizeToTrayToggled;
             Grid.SetColumn(ChkMinimizeToTray, 4);
             settingsGrid.Children.Add(ChkMinimizeToTray);
 
@@ -567,6 +574,58 @@ namespace CleanRamBoosterApp.WpfUI
             BtnBoost.Content = WpfIcons.CreateIconTextContent("Rocket", label, Brushes.White, 18, 9);
         }
 
+        private void OnAutoCleanToggled(object sender, RoutedEventArgs e)
+        {
+            if (isSyncingSettings) return;
+            bool enabled = ChkAutoClean.IsChecked == true;
+            CbThreshold.IsEnabled = enabled;
+            if (SettingsService.Instance.Current.AutoCleanEnabled != enabled)
+            {
+                SettingsService.Instance.Update(st => st.AutoCleanEnabled = enabled);
+            }
+        }
+
+        private void OnThresholdSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (isSyncingSettings || CbThreshold.SelectedIndex < 0) return;
+            int threshold = Math.Clamp(70 + (CbThreshold.SelectedIndex * 5), 70, 90);
+            if (SettingsService.Instance.Current.AutoCleanThresholdPercent != threshold)
+            {
+                SettingsService.Instance.Update(st => st.AutoCleanThresholdPercent = threshold);
+            }
+        }
+
+        private void OnMinimizeToTrayToggled(object sender, RoutedEventArgs e)
+        {
+            if (isSyncingSettings) return;
+            bool keepInTray = ChkMinimizeToTray.IsChecked == true;
+            if (SettingsService.Instance.Current.MinimizeToTray != keepInTray)
+            {
+                SettingsService.Instance.Update(st => st.MinimizeToTray = keepInTray);
+            }
+        }
+
+        public void SyncSettingsControls()
+        {
+            isSyncingSettings = true;
+            try
+            {
+                var st = SettingsService.Instance.Current;
+                ChkAutoClean.IsChecked = st.AutoCleanEnabled;
+                CbThreshold.IsEnabled = st.AutoCleanEnabled;
+                int idx = Math.Clamp((st.AutoCleanThresholdPercent - 70) / 5, 0, 4);
+                if (CbThreshold.Items.Count > idx)
+                {
+                    CbThreshold.SelectedIndex = idx;
+                }
+                ChkMinimizeToTray.IsChecked = st.MinimizeToTray;
+            }
+            finally
+            {
+                isSyncingSettings = false;
+            }
+        }
+
         public void ApplyLanguage()
         {
             bool isAr = LocalizationService.IsArabic;
@@ -575,6 +634,10 @@ namespace CleanRamBoosterApp.WpfUI
             UpdateBoostButtonContent();
             ChkAutoClean.Content = LocalizationService.T("AutoCleanEnable", "Enable Background Auto-Clean");
             lblTrigger.Text = LocalizationService.T("AutoCleanTrigger", "Trigger when RAM exceeds:");
+            string cooldownTip = LocalizationService.T("AutoCleanCooldownTooltip", "Runs automatic RAM cleanup when usage reaches this level (15-minute cooldown to protect SSD/NVMe/HDD).");
+            ChkAutoClean.ToolTip = cooldownTip;
+            lblTrigger.ToolTip = cooldownTip;
+            CbThreshold.ToolTip = cooldownTip;
             ChkMinimizeToTray.Content = LocalizationService.T("KeepInTray", "Keep in Tray on Close");
             lblLogTitle.Text = LocalizationService.T("LogTitle", "Live Activity & Optimization Log");
             UpdateLogActionButtons();
@@ -586,25 +649,34 @@ namespace CleanRamBoosterApp.WpfUI
             ChipAvailable.Title = LocalizationService.T("StatusAvailable", "Available");
             ChipTotalRam.Title = LocalizationService.T("StatusTotalRam", "Total RAM");
 
-            CbThreshold.Items.Clear();
-            if (isAr)
+            isSyncingSettings = true;
+            try
             {
-                CbThreshold.Items.Add("\u200E70% ضغط");
-                CbThreshold.Items.Add("\u200E75% ضغط");
-                CbThreshold.Items.Add("\u200E80% ضغط");
-                CbThreshold.Items.Add("\u200E85% ضغط");
-                CbThreshold.Items.Add("\u200E90% ضغط");
+                CbThreshold.Items.Clear();
+                if (isAr)
+                {
+                    CbThreshold.Items.Add("\u200E70% ضغط");
+                    CbThreshold.Items.Add("\u200E75% ضغط");
+                    CbThreshold.Items.Add("\u200E80% ضغط");
+                    CbThreshold.Items.Add("\u200E85% ضغط");
+                    CbThreshold.Items.Add("\u200E90% ضغط");
+                }
+                else
+                {
+                    CbThreshold.Items.Add("70% Load");
+                    CbThreshold.Items.Add("75% Load");
+                    CbThreshold.Items.Add("80% Load");
+                    CbThreshold.Items.Add("85% Load");
+                    CbThreshold.Items.Add("90% Load");
+                }
+                int initialIdx = Math.Clamp((SettingsService.Instance.Current.AutoCleanThresholdPercent - 70) / 5, 0, 4);
+                CbThreshold.SelectedIndex = initialIdx;
+                CbThreshold.IsEnabled = SettingsService.Instance.Current.AutoCleanEnabled;
             }
-            else
+            finally
             {
-                CbThreshold.Items.Add("70% Load");
-                CbThreshold.Items.Add("75% Load");
-                CbThreshold.Items.Add("80% Load");
-                CbThreshold.Items.Add("85% Load");
-                CbThreshold.Items.Add("90% Load");
+                isSyncingSettings = false;
             }
-            int initialIdx = Math.Clamp((SettingsService.Instance.Current.AutoCleanThresholdPercent - 70) / 5, 0, 4);
-            CbThreshold.SelectedIndex = initialIdx;
             RenderQuickCards();
         }
 

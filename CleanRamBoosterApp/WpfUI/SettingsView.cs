@@ -814,6 +814,16 @@ namespace CleanRamBoosterApp.WpfUI
             btnRestartApp.Content = WpfIcons.CreateIconTextContent("Refresh", UITheme.StripLeadingIcon(LocalizationService.T("BtnRestartApp", "🔄 Restart PC Boost")), btnRestartApp.Foreground, 15, 7);
         }
 
+        public void SyncSettingsControls()
+        {
+            var st = SettingsService.Instance.Current;
+            chkStartWithWindows.IsChecked = st.StartWithWindows;
+            chkRunAsAdminOnBoot.IsChecked = st.RunAsAdminOnBoot;
+            chkMinTray.IsChecked = st.MinimizeToTray;
+            chkDisableRamNotif.IsChecked = st.DisableRamCleanNotifications;
+            chkStartupAlert.IsChecked = st.StartupAlertEnabled;
+        }
+
         public void ApplyLanguage()
         {
             lblHead.Text = UITheme.StripLeadingIcon(LocalizationService.T("SettingsHeader", "⚙️ Application Settings & System Specs"));
