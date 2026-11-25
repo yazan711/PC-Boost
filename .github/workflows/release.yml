@@ -106,6 +106,9 @@ jobs:
           - Multi-profile Care & Cleanup deep scan with optional System Restore Point & HTML export
           - Startup Manager with Startup Guard alerts, inline UAC elevation, and 1-Click Undo history
           - Full Dark & Light themes + English & Arabic (RTL) support
+
+          ---
+          *Built using **AI Gemini** (Google Gemini).*
           '@
           $notes = $notes.Replace('__TAG__', $tag).Replace('__ZIP__', $zip)
 

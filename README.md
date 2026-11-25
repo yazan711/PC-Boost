@@ -5,7 +5,10 @@ A fast, native, zero-bloat Windows 10/11 optimization and power-user suite built
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-0078D6)
 ![Framework](https://img.shields.io/badge/.NET-8.0%20WPF-512BD4)
 ![Languages](https://img.shields.io/badge/UI-English%20%26%20Arabic%20(RTL)-10B981)
+![Built With](https://img.shields.io/badge/Built%20with-AI%20Gemini-8E75B2)
 ![License](https://img.shields.io/badge/License-MIT-blue)
+
+> Built using **AI Gemini** (Google Gemini).
 
 ---
 
