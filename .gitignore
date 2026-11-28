@@ -7,9 +7,12 @@ publish/
 *.suo
 *.cache
 
-# Local secrets, signing keys & logs
+# Local secrets, signing keys, handover & local scripts (excluded from GitHub)
 .env
 certs/
+HANDOVER.md
+scripts/
+build-release.ps1
 *.pfx
 *.p12
 *.snk

@@ -66,24 +66,22 @@ dotnet build PCBoost.sln -c Release
 dotnet run --project CleanRamBoosterApp.Tests\CleanRamBoosterApp.Tests.csproj -c Release --no-build
 ```
 
-### Full Release Packaging (Portable + `PC-Boost-Setup.exe` + Optional Authenticode Signing)
+### Publish Portable & Installer *(Optional)*
 ```powershell
-# Unsigned release build (app + tests + portable zip + PC-Boost-Setup.exe)
-.\build-release.ps1 -NoSign
+# Publish self-contained win-x64 portable folder
+dotnet publish CleanRamBoosterApp\CleanRamBoosterApp.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o CleanRamBoosterApp\publish\win-x64
 
-# Signed release build with a code-signing certificate (.pfx)
-.\build-release.ps1 -CertPath "path\to\certificate.pfx" -CertPassword "your-password"
+# Compile Windows installer (requires Inno Setup 6)
+iscc CleanRamBoosterApp\Installer\PCBoostSetup.iss
 ```
-See [HANDOVER.md](HANDOVER.md) for detailed architecture notes and local signing setup (`scripts/Setup-CodeSigning.ps1`).
 
 ---
 
 ## Project Structure
 
 ```text
+├── .github/workflows/                # CI build & release automation
 ├── PCBoost.sln                       # Visual Studio / dotnet solution
-├── build-release.ps1                 # End-to-end build, test, sign & packaging script
-├── scripts/Setup-CodeSigning.ps1     # Local SHA-256 Authenticode cert helper
 ├── CleanRamBoosterApp/               # Main .NET 8 WPF application
 │   ├── WpfUI/                        # Main shell, views, themes, icons, dialogs
 │   │   └── Toolbox/                  # 6 pure-WPF Power User Toolbox windows
@@ -91,7 +89,9 @@ See [HANDOVER.md](HANDOVER.md) for detailed architecture notes and local signing
 │   ├── Models/                       # Data models
 │   ├── Installer/PCBoostSetup.iss    # Inno Setup 6 installer script (EN + AR)
 │   └── Resources/                    # Application icons
-└── CleanRamBoosterApp.Tests/         # Zero-dependency automated test suite
+├── CleanRamBoosterApp.Tests/         # Zero-dependency automated test suite
+├── LICENSE                           # MIT License
+└── README.md
 ```
 
 ## License
